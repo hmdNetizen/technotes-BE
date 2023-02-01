@@ -17,7 +17,7 @@ const login = asyncHandler(async (req, res) => {
   // If there is username and password fields, then find the user in the DB based on the username
   const foundUser = await User.findOne({ username }).exec();
 
-  if (!foundUser || !foundUser.isActive) {
+  if (!foundUser || !foundUser.active) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
@@ -98,6 +98,19 @@ const refresh = asyncHandler(async (req, res) => {
 // @route POST /auth/logout
 // @accss Public - just to clear the cookie if it exists
 
-const logout = asyncHandler(async (req, res) => {});
+const logout = asyncHandler(async (req, res) => {
+  const cookies = req.cookies;
+
+  if(!cookies?.jwt) return res.sendStatus(204);
+
+  res.clearCookie("jwt", {
+    secure: true,
+    sameSite: "None",
+    httpOnly: true,
+  })
+
+  res.json({message: "Cookie cleared"})
+
+});
 
 module.exports = { login, refresh, logout };
