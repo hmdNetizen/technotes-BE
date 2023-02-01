@@ -121,9 +121,24 @@ const deleteUser = asyncHandler(async (req, res) => {
   res.json(reply);
 });
 
+const updateAllUsers = asyncHandler(async (req, res) => {
+  const update = {
+    $set: {
+      isBlocked: false,
+    },
+  };
+
+  await User.updateMany({}, update, {
+    runValidators: true,
+  }).exec();
+
+  res.status(200).json({ message: "Users updated!" });
+});
+
 module.exports = {
   getAllUsers,
   createNewUser,
   updateUser,
+  updateAllUsers,
   deleteUser,
 };
