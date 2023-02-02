@@ -17,7 +17,7 @@ const login = asyncHandler(async (req, res) => {
   // If there is username and password fields, then find the user in the DB based on the username
   const foundUser = await User.findOne({ username }).exec();
 
-  if (!foundUser || !foundUser.isActive) {
+  if (!foundUser || !foundUser.active) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
@@ -35,7 +35,7 @@ const login = asyncHandler(async (req, res) => {
       },
     },
     process.env.ACCESS_TOKEN_SECRET,
-    "10s"
+    { expiresIn: "30s" }
   );
 
   const refreshToken = jwt.sign(
@@ -43,11 +43,11 @@ const login = asyncHandler(async (req, res) => {
       username: foundUser.username,
     },
     process.env.REFRESH_TOKEN_SECRET,
-    "1d"
+    { expiresIn: "1d" }
   );
 
   res.cookie("jwt", refreshToken, {
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
     httpOnly: true,
     sameSite: "None",
     maxAge: 7 * 24 * 60 * 60 * 1000, //Should be set to the expiry date of the refreshToken
@@ -61,13 +61,14 @@ const login = asyncHandler(async (req, res) => {
 // @route GET /auth/refresh
 // @accss Public - because access token is expired
 const refresh = asyncHandler(async (req, res) => {
-  const { jwt } = req.cookies;
+  const cookies = req.cookies;
 
-  if (!jwt) return res.status(401).json({ message: "Unauthorized" });
+  if (!cookies?.jwt) return res.status(401).json({ message: "Unauthorized" });
 
-  // If the jwt refreshToken does exists, then process to issue a new access token
+  // If the jwt refreshToken does exists, then proceed to issue a new access token
+  const refreshToken = cookies.jwt;
   jwt.verify(
-    jwt,
+    refreshToken,
     process.env.REFRESH_TOKEN_SECRET,
     asyncHandler(async (err, decoded) => {
       if (err) return res.status(403).json({ message: "Forbidden" });
@@ -86,7 +87,7 @@ const refresh = asyncHandler(async (req, res) => {
           },
         },
         process.env.ACCESS_TOKEN_SECRET,
-        "10s"
+        { expiresIn: "30s" }
       );
 
       res.json({ accessToken });
@@ -98,6 +99,18 @@ const refresh = asyncHandler(async (req, res) => {
 // @route POST /auth/logout
 // @accss Public - just to clear the cookie if it exists
 
-const logout = asyncHandler(async (req, res) => {});
+const logout = asyncHandler(async (req, res) => {
+  const cookies = req.cookies;
+
+  if (!cookies?.jwt) return res.sendStatus(204);
+
+  res.clearCookie("jwt", {
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "None",
+    httpOnly: true,
+  });
+
+  res.json({ message: "Cookie cleared" });
+});
 
 module.exports = { login, refresh, logout };
