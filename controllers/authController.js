@@ -29,7 +29,7 @@ const login = asyncHandler(async (req, res) => {
   // If the password matches the saved password, then issue an access token and refresh token
   const accessToken = jwt.sign(
     {
-      userInfo: {
+      UserInfo: {
         username: foundUser.username,
         roles: foundUser.roles,
       },
@@ -80,7 +80,7 @@ const refresh = asyncHandler(async (req, res) => {
 
       const accessToken = jwt.sign(
         {
-          userInfo: {
+          UserInfo: {
             username: foundUser.username,
             roles: foundUser.roles,
           },
