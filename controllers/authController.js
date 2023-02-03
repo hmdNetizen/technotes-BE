@@ -43,11 +43,11 @@ const login = asyncHandler(async (req, res) => {
       username: foundUser.username,
     },
     process.env.REFRESH_TOKEN_SECRET,
-    { expiresIn: "1d" }
+    { expiresIn: "1m" }
   );
 
   res.cookie("jwt", refreshToken, {
-    secure: process.env.NODE_ENV === "production",
+    secure: true,
     httpOnly: true,
     sameSite: "None",
     maxAge: 7 * 24 * 60 * 60 * 1000, //Should be set to the expiry date of the refreshToken
@@ -105,7 +105,7 @@ const logout = asyncHandler(async (req, res) => {
   if (!cookies?.jwt) return res.sendStatus(204);
 
   res.clearCookie("jwt", {
-    secure: process.env.NODE_ENV === "production",
+    secure: true,
     sameSite: "None",
     httpOnly: true,
   });
