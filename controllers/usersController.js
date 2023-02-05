@@ -23,7 +23,7 @@ const getAllUsers = asyncHandler(async (req, res) => {
 const createNewUser = asyncHandler(async (req, res) => {
   const { username, password, roles } = req.body;
 
-  if (!username || !password || !roles?.length || !Array.isArray(roles)) {
+  if (!username || !password) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
@@ -33,16 +33,15 @@ const createNewUser = asyncHandler(async (req, res) => {
     .exec();
 
   if (duplicate) {
-    return res.status(409).json({ messgae: "Duplicate username" });
+    return res.status(409).json({ message: "Duplicate username" });
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const userObject = {
-    username,
-    password: hashedPassword,
-    roles,
-  };
+  const userObject =
+    !Arrary.isArray(roles) || !roles.length
+      ? { username, password: hashedPassword }
+      : { username, password: hashedPassword, roles };
 
   const user = await User.create(userObject);
 
